@@ -54,6 +54,8 @@ additional_bind=($(grep SINGULARITY_BIND $lua | cut -d \" -f4))
 variables=$(grep pushenv $lua |sed 's/pushenv/setenv/g' | sed 's/(/ /g' |  sed 's/)/ /g' | sed 's/,/ /g')
 echo "module-whatis   \"$description\"" >> $tcl
 echo "module-whatis   \"$homepage\"" >> $tcl
+echo "module-whatis \"Commands: $programs\"" >> $tcl
+
 if [ ! -z "$biocontainers" ]
 then
 	echo "module-whatis   \"$biocontainers\"" >> $tcl
@@ -188,9 +190,11 @@ for module in $lua_dir/*; do
         do
                 ver=$(basename -- "$lua" .lua)
                 tcl_output="$tcl_dir/$app/$ver"
+#               programs=$(grep 'local programs' $lua | cut -d '{' -f 2 |sed 's/}//g'| sed 's/\"//g')
+                programs=$(sed -n '/local programs/,/}/p; /}/q' $lua | tr -d "[:space:]"   | cut -d '{' -f 2 |sed 's/}//g' | sed 's/\"//g' |sed 's/\s*$//g' |
+ sed 's/,$//')
                 generate_new_modulefile $app $ver $lua $tcl_output
-                programs=$(grep 'local programs' $lua | cut -d '{' -f 2 |sed 's/}//g'| sed 's/\"//g')
-                IFS=', ' read -r -a program_array <<< "$programs"
+                IFS=',' read -r -a program_array <<< "$programs"
                 rm -rf /cluster/tufts/rt/yzhang85/biocontainers/tools/$app/$ver/bin
                 mkdir -p /cluster/tufts/rt/yzhang85/biocontainers/tools/$app/$ver/bin
                 for program in "${program_array[@]}"
