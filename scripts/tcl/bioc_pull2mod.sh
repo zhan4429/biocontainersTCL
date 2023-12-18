@@ -326,16 +326,18 @@ find_latest_modulefile() {
 
 	# Are there any modules for this app?
 	# Be careful about fuzzy matches, and pick first exact one.
-	local module=$(module -q -t --redirect --ignore_cache avail "$app" 2> /dev/null | grep "^$app/" | head -1)
-	[[ -z "$module" ]] && return
+	#local module=$(module -q -t --redirect --ignore_cache avail "$app" 2> /dev/null | grep "^$app/" | head -1)
+	#[[ -z "$module" ]] && return
 
 	# Looks like there is an existing module to use... get its filename
 	# from the header of a 'module show' (second line).
-	local modulefile=$(module -q -t --redirect --raw show "$module" 2> /dev/null | awk 'NR==2 {print $1}')
+	#local modulefile=$(module -q -t --redirect --raw show "$module" 2> /dev/null | awk 'NR==2 {print $1}')
+	local modulefile=$(ls -t1 $ModulePath/$app/* | head -n 1)
 	if [[ $? -ne 0 ]]; then
-		warn -p "Error while trying to locate existing modulefule '$module' for template."
+#		warn -p "Error while trying to locate existing modulefule '$module' for template."
+		warn -p "No previous modulefiles for $app can be found"
 	fi
-	modulefile=${modulefile%%:} 		# And trim terminal ':'
+	#modulefile=${modulefile%%:} 		# And trim terminal ':'
 	echo "$modulefile"
 }
 
