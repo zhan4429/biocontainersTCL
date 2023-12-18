@@ -332,7 +332,7 @@ find_latest_modulefile() {
 	# Looks like there is an existing module to use... get its filename
 	# from the header of a 'module show' (second line).
 	#local modulefile=$(module -q -t --redirect --raw show "$module" 2> /dev/null | awk 'NR==2 {print $1}')
-	local modulefile=$(ls -t1 $ModulePath/$app/* | head -n 1)
+	local modulefile=$(ls -t1 $MODULEDIRS/$app/* | head -n 1)
 	if [[ $? -ne 0 ]]; then
 #		warn -p "Error while trying to locate existing modulefule '$module' for template."
 		warn -p "No previous modulefiles for $app can be found"
