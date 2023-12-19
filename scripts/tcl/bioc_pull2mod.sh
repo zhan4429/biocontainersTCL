@@ -367,31 +367,83 @@ generate_new_modulefile() {
 	# I don't like <<-, so indentation is a bit messed up
 	verbose -p "No existing modulefiles for '$app' found, generating fresh stub."
 	cat <<___EOF___
--- The MIT License (MIT)
--- 
--- Copyright (c) 2023 Tufts University
--- Copyright (c) 2021 Purdue University
--- Copyright (c) 2020 NVIDIA Corporation
---
--- Permission is hereby granted, free of charge, to any person obtaining a copy
--- of this software and associated documentation files (the "Software"), to
--- deal in the Software without restriction, including without limitation the
--- rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
--- sell copies of the Software, and to permit persons to whom the Software is
--- furnished to do so, subject to the following conditions:
---
--- The above copyright notice and this permission notice shall be included in
--- all copies or substantial portions of the Software.
---
--- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
--- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
--- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
--- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
--- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
--- FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
--- IN THE SOFTWARE.
+#%Module -*- tcl -*-
+# The MIT License (MIT)
+# Copyright (c) 2023 Tufts University
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
 
 -- TODO: edit name, description, home page URL (in help and whatis)
+module-whatis   "Description: ${app^} is ###############################################################"
+module-whatis   "Home page:     $home_url"
+module-whatis "Commands: ###,###"
+
+set pkg ${app^} 
+set ver $ver
+
+proc ModulesHelp { } {
+  puts stderr "\tThis module adds alphafold v2.3.1 to the environment.  It runs as a container under singularity"
+}
+
+#
+# prepend-path and set SINGULARITY_BIND
+#
+prepend-path PATH            /cluster/tufts/biocontainers/tools/alphafold/2.3.1/bin
+prepend-path --delim=, SINGULARITY_BIND /cluster 
+
+#
+# set environment variable
+#
+
+
+#
+# list conflict modules that cannot be loaded together
+#
+set conflicts_modules {alphafold}
+foreach a_conflict $conflicts_modules {
+  conflict $a_conflict
+}
+
+#
+# appended log section
+# 
+
+if {[module-info mode "load"]} {
+  global env
+  if {[info exists env(USER)]} {
+    set the_user [lindex [array get env USER] 1]
+  } else {
+    set the_user "foo"
+  }
+  system [concat "logger environment-modules" [module-info name] $the_user ]
+}
+
+set additional_prereqs {"singularity/3.8.4" "squashfs/4.4"}
+if {[module-info mode "load"]} {
+  foreach a_module $additional_prereqs {
+    if {![is-loaded $a_module]} {
+      module load $a_module
+    }
+  }
+}
+
+
 help([==[
 
 Description
