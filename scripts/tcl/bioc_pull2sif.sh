@@ -228,7 +228,7 @@ fi
 OUTDIR="${OUTDIR:-$OUTDIR_DEF}"
 
 # Required prerequisite commands, if any.
-module load singularity/3.8.4 squashfs/4.4
+module load singularity
 PREREQCMDS=( singularity )
 for cmd in "${PREREQCMDS[@]}"; do
 	assert_command_is_available "$cmd"

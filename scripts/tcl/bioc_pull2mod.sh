@@ -134,8 +134,6 @@ Options:
 		 stub).  In other words, just replace version/url/image name
 		 in the existing modulefile and save it as new - very handy
 		 when pulling new versions of existing applications.
-	 	 Multiple '-m' options will can be given and will be combined.
-		 The '-d' output directory is always searched.
   -f, --force	 Force overwriting of existing modulefiles (default is skip).
   -n, --dry-run	 Print what would be done, but don't actually do it.
   -q, --quiet	 Be really quiet (suppress most of non-essential output).
@@ -329,9 +327,7 @@ find_latest_modulefile() {
 	#local module=$(module -q -t --redirect --ignore_cache avail "$app" 2> /dev/null | grep "^$app/" | head -1)
 	#[[ -z "$module" ]] && return
 
-	# Looks like there is an existing module to use... get its filename
-	# from the header of a 'module show' (second line).
-	#local modulefile=$(module -q -t --redirect --raw show "$module" 2> /dev/null | awk 'NR==2 {print $1}')
+	# Based on the last modified date to pick the latest version as template. 
 	local modulefile=$(ls -t1 $MODULEDIRS/$app/* | head -n 1)
 	if [[ $? -ne 0 ]]; then
 #		warn -p "Error while trying to locate existing modulefule '$module' for template."
@@ -389,33 +385,34 @@ generate_new_modulefile() {
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
--- TODO: edit name, description, home page URL (in help and whatis)
+## TODO: edit name, description, home page URL (in help and whatis)
 module-whatis   "Description: ${app^} is ###############################################################"
 module-whatis   "Home page:     $home_url"
+module-whatis   "BioContainers: $bioc_url"
 module-whatis "Commands: ###,###"
 
 set pkg ${app^} 
 set ver $ver
 
 proc ModulesHelp { } {
-  puts stderr "\tThis module adds alphafold v2.3.1 to the environment.  It runs as a container under singularity"
+  puts stderr "\tThis module adds ${app^} v${ver} to the environment.  It runs as a container under singularity"
 }
 
+## TODO: bind extra paths if any
 #
 # prepend-path and set SINGULARITY_BIND
 #
-prepend-path PATH            /cluster/tufts/biocontainers/tools/alphafold/2.3.1/bin
+prepend-path PATH            /cluster/tufts/biocontainers/tools/${app^}/$ver/bin
 prepend-path --delim=, SINGULARITY_BIND /cluster 
 
-#
-# set environment variable
+## TODO: set environment variable if any
 #
 
-
+## TODO: check module conflicts (think older version, OpenMPI, etc)
 #
 # list conflict modules that cannot be loaded together
 #
-set conflicts_modules {alphafold}
+set conflicts_modules {XXXX}
 foreach a_conflict $conflicts_modules {
   conflict $a_conflict
 }
@@ -442,101 +439,6 @@ if {[module-info mode "load"]} {
     }
   }
 }
-
-
-help([==[
-
-Description
-===========
-${app^} is ###############################################################
-
-More information
-================
- - BioContainers: $bioc_url
- - Home page:     $home_url
-]==])
-
-whatis("Name: ${app^}")
-whatis("Version: $ver")
-whatis("Description: ${app^} is ###############################################################")
-whatis("BioContainers: $bioc_url")
-whatis("Home page:     $home_url")
-
-if not (os.getenv("BIOC_SINGULARITY_MODULE") == "none") then
-   local singularity_module = os.getenv("BIOC_SINGULARITY_MODULE") or "Singularity"
-   if not (isloaded(singularity_module)) then
-      load(singularity_module)
-   end
-end
-
--- TODO: check module conflicts (think older version, OpenMPI, etc)
-conflict(myModuleName())
-
--- TODO: Add all necessary commands to the programs={} list!
---       Think executables, mpirun, possibly Perl or Python, etc.
-local image = "$image"
-local uri = "$uri"
-local programs = {"$app"}
-local entrypoint_args = ""
-
--- The absolute path to Singularity is needed so it can be invoked on remote
--- nodes without the corresponding module necessarily being loaded.
--- Trim off the training newline.
-local singularity = capture("which singularity | head -c -1")
-
-if (os.getenv("BIOC_IMAGE_DIR")) then
-   image = pathJoin(os.getenv("BIOC_IMAGE_DIR"), image)
-
-   if not (isFile(image)) then
-      -- The image could not be found in the container directory
-      if (mode() == "load") then
-         LmodMessage("file not found: " .. image)
-         LmodMessage("The container image will be pulled upon first use to the Singularity cache")
-      end
-      image = uri
-
-      -- Alternatively, this could pull the container image and
-      -- save it in the container directory
-      --if (mode() == "load") then
-      --   subprocess(singularity .. " pull " .. image .. " " .. uri)
-      --end
-   end
-else
-   -- Look for the image in the Singularity cache, and if not found
-   -- download it when "singularity run" is invoked.
-   image = uri
-end
-
---------
---- appended log section
--------- 
-
-if {[module-info mode "load"]} {
-  global env
-  if {[info exists env(USER)]} {
-    set the_user [lindex [array get env USER] 1]
-  } else {
-    set the_user "foo"
-  }
-  system [concat "logger environment-modules" [module-info name] \$the_user ]
-}
-
-set additional_prereqs {"singularity/3.8.4" "squashfs/4.4"}
-if {[module-info mode "load"]} {
-  foreach a_module \$additional_prereqs {
-    if {![is-loaded \$a_module]} {
-      module load \$a_module
-    }
-  }
-}
-
---------
---- prepend-path and set SINGULARITY_BIND
---------
-prepend-path PATH            /cluster/tufts/biocontainers/tools/$app/$ver/bin
-
--- Additional commands or environment variables, if any
-
 ___EOF___
 
 	return $MODTYPE_NEW 			# report back the type
@@ -592,8 +494,6 @@ repurpose_old_modulefile() {
 	echo "$buf"
 	return $MODTYPE_EXISTING 		# report back the type
 }
-
-
 
 # ----------------------------------------------------------------------
 # Trap signals
@@ -662,13 +562,6 @@ if [[ -n "$OUTDIR" && ! -d "$OUTDIR" ]]; then
 	mkdir -p "$OUTDIR" || error_exit "Output directory '$OUTDIR' not available, bailing out."
 fi
 
-# Add OUTDIR to places where we look for currently existing modules
-MODULEDIRS+=( "$(readlink -m "$OUTDIR")" )
-
-# We will use Lmod to search for existing modulefiles of each application.
-# Trim $MODULEPATH to only contain locations we want.
-SAVE_MODULEPATH="$MODULEPATH"
-MODULEPATH=$(printf "%s\n" "${MODULEDIRS[@]}" | paste -s -d ':')
 
 # Global constants for types of resulting modulefiles (new or from template).
 MODTYPE_NEW=0
