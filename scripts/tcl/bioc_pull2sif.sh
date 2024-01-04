@@ -4,14 +4,17 @@
 #
 # Usage: bioc_pull2sif.sh [OPTIONS] [-h|--help] image_URI(s)
 #
-#
-# By Lev Gorenstein, Purdue University Research Computing <lev@purdue.edu>, 2021
+# Original script was written by Lev Gorenstein, Purdue University Research Computing <lev@purdue.edu>, 2021
+# Yucheng Zhang at Tufts University modified the script to adapt the HPC system at Tufts University 
+# At Purdue, singularity/apptainer was installed from RPM into system default PATH.
+# At Tufts, users need to load singularity/apptainer module to run singularity/apptainer.
 #
 # Revision history:
+# 2024-01-04 v1.0  modified version at Tufts
 # 2021-03-30 	v0.1 	Initial revision (created from ngc_pull2sif.sh v0.2.1)
 # ----------------------------------------------------------------------
 
-VERSION="0.1" 			# Increment me!
+VERSION="1.0" 			# Increment me!
 PROGNAME=${BASH_SOURCE##*/}
 
 # ----------------------------------------------------------------------
@@ -227,9 +230,8 @@ fi
 # More defaults
 OUTDIR="${OUTDIR:-$OUTDIR_DEF}"
 
-# Required prerequisite commands, if any.
+# Required prerequisite commands/modules, if any.
 module load singularity
-squashfs/4.4
 PREREQCMDS=( singularity )
 for cmd in "${PREREQCMDS[@]}"; do
 	assert_command_is_available "$cmd"
@@ -253,7 +255,8 @@ fi
 # Note: may need 'sudo -E' for image builds (to pass environment to root).
 # Note: 'singularity cache list' and 'singularity cache clean [--all]' are good.
 if [[ -d "$CLUSTER_SCRATCH" ]]; then
-	export SINGULARITY_CACHEDIR="$CLUSTER_SCRATCH/singularity"
+	export SINGULARITY_CACHEDIR="$CLUSTER_SCRATCH/singularity_cache"
+	export APPTAINER_CACHEDIR="$CLUSTER_SCRATCH/apptainer_cache"
 	verbose -p "Setting singularity cache location: $SINGULARITY_CACHEDIR"
 fi
 
