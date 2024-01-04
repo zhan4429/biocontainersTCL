@@ -20,7 +20,7 @@ PROGNAME=${BASH_SOURCE##*/}
 OUTDIR_DEF="."
 
 # Safe $PATH and sane behavior in pipes
-export PATH=/bin:/usr/bin:/usr/sbin:/usr/local/bin
+#export PATH=/bin:/usr/bin:/usr/sbin:/usr/local/bin
 set -o pipefail
 
 # ----------------------------------------------------------------------
@@ -229,6 +229,7 @@ OUTDIR="${OUTDIR:-$OUTDIR_DEF}"
 
 # Required prerequisite commands, if any.
 module load singularity
+squashfs/4.4
 PREREQCMDS=( singularity )
 for cmd in "${PREREQCMDS[@]}"; do
 	assert_command_is_available "$cmd"
