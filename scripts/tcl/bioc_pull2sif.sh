@@ -19,8 +19,8 @@ PROGNAME=${BASH_SOURCE##*/}
 # ----------------------------------------------------------------------
 OUTDIR_DEF="."
 
-# Safe $PATH and sane behavior in pipes
-#export PATH=/bin:/usr/bin:/usr/sbin:/usr/local/bin
+# Safe sane behavior in pipes
+
 set -o pipefail
 
 # ----------------------------------------------------------------------
