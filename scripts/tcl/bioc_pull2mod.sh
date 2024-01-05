@@ -17,7 +17,7 @@
 # 2022-09-28 	v0.3.1 	Minor tweaks and special application names.
 # ----------------------------------------------------------------------
 
-VERSION="0.3.1" 			# Increment me!
+VERSION="1.0" 			# Increment me!
 PROGNAME=${BASH_SOURCE##*/}
 
 # ----------------------------------------------------------------------
@@ -25,8 +25,7 @@ PROGNAME=${BASH_SOURCE##*/}
 # ----------------------------------------------------------------------
 OUTDIR_DEF="."
 
-# Safe $PATH and sane behavior in pipes
-export PATH=/bin:/usr/bin:/usr/sbin:/usr/local/bin
+# Safe sane behavior in pipes
 set -o pipefail
 
 # ----------------------------------------------------------------------
@@ -315,25 +314,15 @@ print_modulefile() {
 find_latest_modulefile() {
 	# find_latest_modulefile "APP"
 	# Determines whether we already have any modulefiles for the APP ($1).
-	# Returns a path to a suitable modulefile, or empty string if none
-	# found.
-	# Running 'find' in modules directory may be painful (hard to sort
-	# resulting versions), so use Lmod to do it for us.
+	# Returns a path to a suitable modulefile, or empty string if none found.
 
 	local app="$1"
-
-	# Are there any modules for this app?
-	# Be careful about fuzzy matches, and pick first exact one.
-	#local module=$(module -q -t --redirect --ignore_cache avail "$app" 2> /dev/null | grep "^$app/" | head -1)
-	#[[ -z "$module" ]] && return
 
 	# Based on the last modified date to pick the latest version as template. 
 	local modulefile=$(ls -t1 $MODULEDIRS/$app/* | head -n 1)
 	if [[ $? -ne 0 ]]; then
-#		warn -p "Error while trying to locate existing modulefule '$module' for template."
 		warn -p "No previous modulefiles for $app can be found"
 	fi
-	#modulefile=${modulefile%%:} 		# And trim terminal ':'
 	echo "$modulefile"
 }
 
